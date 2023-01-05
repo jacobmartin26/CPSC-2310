@@ -1,0 +1,111 @@
+/************************
+* Jacob Martin
+* jmart52
+* Section 4
+************************/
+
+CPSC 2310 Fall 22
+Lab 10 Questions
+
+1. As discussed in the lab writeup, the locations for min and max are 
+	-8(%rbq) and -4(%rbq), which are 4 apart. How far apart would these
+	addresses be if min and max were chars instead of ints? 1 apart 
+	
+	Why? Because the size of a char is only 1 byte
+
+	What if they were doubles? 8 apart
+	(You can test this)
+
+
+2. Alter the values assigned to min and max in the driver.s file
+	TA's Note:
+		I'm unsure if this is meant to be a trick or not. Altering the
+		min value here may not have the behaviour you would expect
+		perhaps you should change the driver.c to where changing the min
+		has an effect. You can either answer the questions without the
+		driver.c change or with it we will accept both answers.
+
+	| min | max | result
+	=======================
+	| 0   | 10  | 012345678910
+	| 5   | 10  | 012345678910
+	| 10  | 0   | 0
+	| -5  | 1   | 01
+
+3. What are these lines doing in driver.s?
+	TA's Note:
+		These lines of code may or may not be in your driver.s file
+		answer this question as if it was however. You can tell what is
+		happening based off of just these two lines.
+
+	movl  -8(%rbp), %eax # min, tmp89 : moves max, -8(%rbp), into a temp register, %eax
+   	movl  %eax, -12(%rbp)   # tmp89, i : moves the temp register into i, -12(%rbp)
+
+
+4. What happens when you change the jump conditional to jl instead of jle? Only prints 0 to 9
+	TA's Note:
+		Never memorize most instructions have an intuitive nameing jg
+		makes sense jge makes sense etc.
+
+	What if you change it to jg? Prints newline only
+	Why? The loop condition of i > max is never true
+
+
+
+5. The last line in .L3 handles the for loop change (i++)
+   The third line in .L2  handles the for loop conditional (i < max)
+(The first two lines in .L2 handle the initialization, but we won't alter that)
+	
+Fill in the resulting loop and print out when we change the x86 commands 
+(*some of these create infinite loops so testing directly may take awhile, 
+try to logic through it first. If there is an infinite loop, write "infinite
+loop" as the printout)
+
+
+	TA's Note:
+		The mull here won't behave as you expect. You can just write
+		doesn't compile if you'd like, or you can use mull as follows 
+
+		movl -12(%rbp), %eax   # move i into the %eax register
+		movl $2, %ecx          # move 2 into ecx
+		mull %ecx              # multiply eax by ecx store result into eax
+		movl %eax, -12(%rbp)   # move the result into i
+
+		if you run like that it'll run
+
+	.L3         | .L2  |        for loop             |    printout
+===========================================================================
+addl  $1, -12(%rbp) | jle  | for(i = min; i <= max; i++) | 0 1 3 4....10
+subl  $1, -12(%rbp) | jle  | for(i = min; i <= max; i--) | infinite loop
+addl  $2, -12(%rbp) | jl   | for(i = min; i < max; i++)  | 0 2 4 6 8
+mull  $2, -12(%rbp) | jge  | for(i = min; i >= max; i++) | doesn't compile
+addl  $1, -8(%rbp)  | jle  | for(i = min; i <= max; i++) | infinite loop
+
+
+6. lsl r4, r3, #2 is the same as r4 = 4 * r3. Explain
+	lsl means logical shift left, and left shift means to multiply by powers
+	of 2. In the "x,y,z" format, the x is the destination while y and z are multiplied.
+	This gives r4 = 2^2 * r3 = 4 * r3.
+
+
+   ldr r5, [r0, r4] is the same as r5 = arr[i] in this case. How does this work
+	ldr loads a register with either a 32-bit constant or an address. In its
+	"x,[y,z]" format it means that x is the destination, and in this case r0 is
+	where our array is stored at which contains the index of r4 in it.
+	r5 = r0[r4] = arr[i].
+
+
+
+7. In the beginning of a function in ARM, we push lr onto the stack. At the
+   end, we pop that value into pc. 
+   Why is this important? 
+	The return address for a call is always stored in lr,
+	so we need to push it onto the stack as without this a function could not 
+	jump back to the return address. pop{pc} gets that return address off the stack
+	and put it in the program counter which returns control back to where the function
+	was called from originally.
+
+   What does it accomplish?
+	These two operations combined ensures that any function called will always have
+	a designated place to store and receive the return address. Thus the function
+	is able to give control back to the caller when its own actions are over.
